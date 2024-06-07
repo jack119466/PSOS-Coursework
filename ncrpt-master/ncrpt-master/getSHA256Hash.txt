@@ -1,0 +1,47 @@
+// 获取字符串的 SHA-256 哈希值
+void getSHA256Hash(char *input, char *output) {
+    HCRYPTPROV hProv;
+    HCRYPTHASH hHash;
+    DWORD cbHash;
+    BYTE hash[32];
+    int i;
+
+    // 获取加密服务提供程序上下文句柄
+    if (!CryptAcquireContext(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT)) {
+        printf("Error acquiring crypto provider context.");
+        return;
+    }
+
+    // 创建哈希对象
+    if (!CryptCreateHash(hProv, CALG_SHA_256, 0, 0, &hHash)) {
+        printf("Error creating hash object.");
+        CryptReleaseContext(hProv, 0);
+        return;
+    }
+
+    // 哈希输入数据
+    if (!CryptHashData(hHash, (BYTE *)input, strlen(input), 0)) {
+        printf("Error hashing data.");
+        CryptDestroyHash(hHash);
+        CryptReleaseContext(hProv, 0);
+        return;
+    }
+
+    cbHash = 32;
+    // 获取哈希值
+    if (!CryptGetHashParam(hHash, HP_HASHVAL, hash, &cbHash, 0)) {
+        printf("Error getting hash value.");
+        CryptDestroyHash(hHash);
+        CryptReleaseContext(hProv, 0);
+        return;
+    }
+
+    // 将哈希值转换为十六进制字符串
+    for (i = 0; i < cbHash; i++) {
+        sprintf(&output[i * 2], "%02x", hash[i]);
+    }
+
+    // 清理资源
+    CryptDestroyHash(hHash);
+    CryptReleaseContext(hProv, 0);
+}
